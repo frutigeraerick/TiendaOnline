@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, status
 from sqlalchemy.orm import Session
 from sqlmodel import SQLModel
 import models, schemas, crud
@@ -53,4 +53,4 @@ def listar_productos(
 
 @app.get("/productos/{producto_id}", response_model=schemas.ProductoReadConCategoria)
 def obtener_producto_con_categoria(producto_id: int, db: Session = Depends(get_db)):
-    return crud.obtener_producto_con_categoria
+    return crud.obtener_producto_con_categoria(db, producto_id)
