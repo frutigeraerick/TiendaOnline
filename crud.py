@@ -57,3 +57,84 @@ def desactivar_categoria(db: Session, categoria_id: int):
 
     db.commit()
     return {"mensaje": "La categoria junto a sus productos han sido desactivados correctamente."}
+
+def crear_producto(db: Session, producto: schemas.ProductoCreate):
+    categoria = db.query(models.Categoria).filter(models.Categoria.id == producto.categoria_id).first()
+    if not categoria or not categoria.activa:
+        raise HTTPException(status_code=400, detail="La categoria no existe o esta inactiva.")
+
+    nuevo_producto = models.Producto(
+        nombre=producto.nombre,
+        precio=producto.precio,
+        stock=producto.stock,
+        descripcion=producto.descripcion,
+        activa=True,
+        categoria_id=producto.categoria_id
+    )
+
+    db.add(nuevo_producto)
+    db.commit()
+    db.refresh(nuevo_producto)
+    return nuevo_producto
+
+
+def listar_productos(db: Session, categoria_id: int = None, stock_min: int = None, precio_max: float = None):
+    query = db.query(models.Producto).filter(models.Producto.activa == True)
+
+    if categoria_id:
+        query = query.filter(models.Producto.categoria_id == categoria_id)
+    if stock_min is not None:
+        query = query.filter(models.Producto.stock >= stock_min)
+    if precio_max is not None:
+        query = query.filter(models.Producto.precio <= precio_max)
+
+    return query.all()
+
+
+def obtener_producto_con_categoria(db: Session, producto_id: int):
+    producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
+    if not producto:
+        raise HTTPException(status_code=404, detail="No se encontro el producto.")
+    return producto
+
+
+def actualizar_producto(db: Session, producto_id: int, datos: schemas.ProductoUpdate):
+    producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
+    if not producto:
+        raise HTTPException(status_code=404, detail="No se encontro el producto.")
+    if datos.stock is not None and datos.stock < 0:
+        raise HTTPException(status_code=400, detail="No se encontro el producto.")
+
+    for campo, valor in datos.dict(exclude_unset=True).items():
+        setattr(producto, campo, valor)
+
+    db.commit()
+    db.refresh(producto)
+    return producto
+
+
+def desactivar_producto(db: Session, producto_id: int):
+    producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
+    if not producto:
+        raise HTTPException(status_code=404, detail="No se encontro el producto.")
+    
+    producto.activa = False
+    db.commit()
+    return {"mensaje": "El producto ha sido desactivado."}
+
+
+def restar_stock(db: Session, producto_id: int, cantidad: int):
+    producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
+    if not producto:
+        raise HTTPException(status_code=404, detail="No se encontro el producto.")
+
+    if cantidad <= 0:
+        raise HTTPException(status_code=400, detail="La cantidad tiene que ser mayor que cero.")
+
+    if producto.stock - cantidad < 0:
+        raise HTTPException(status_code=400, detail="No hay suficiente stock disponible.")
+
+    producto.stock -= cantidad
+    db.commit()
+    db.refresh(producto)
+    return producto

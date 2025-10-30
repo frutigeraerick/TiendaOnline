@@ -50,3 +50,8 @@ class ProductoOut(ProductoBase):
 
 class CategoriaConProductos(CategoriaOut):
     productos: List[ProductoOut] = []
+
+CategoriaRead = CategoriaOut
+ProductoRead = ProductoOut
+CategoriaReadConProductos = CategoriaConProductos
+ProductoReadConCategoria = ProductoOut
