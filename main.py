@@ -54,3 +54,7 @@ def listar_productos(
 @app.get("/productos/{producto_id}", response_model=schemas.ProductoReadConCategoria)
 def obtener_producto_con_categoria(producto_id: int, db: Session = Depends(get_db)):
     return crud.obtener_producto_con_categoria(db, producto_id)
+
+@app.put("/productos/{producto_id}/restar_stock", response_model=schemas.ProductoRead)
+def restar_stock(producto_id: int, cantidad: int, db: Session = Depends(get_db)):
+    return crud.restar_stock(db, producto_id, cantidad)
